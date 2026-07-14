@@ -2,7 +2,9 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { put } from "@vercel/blob";
 import { verifyPassword, createSessionToken, verifySessionToken } from "@/lib/auth";
+import { updateSettings } from "@/lib/db";
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "./session";
 
 export async function requireSession(): Promise<void> {
@@ -43,5 +45,30 @@ export async function login(
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  revalidatePath("/[panelSlug]", "page");
+}
+
+export async function saveProfile(formData: FormData): Promise<void> {
+  await requireSession();
+
+  const headline = String(formData.get("headline") ?? "");
+  const message = String(formData.get("message") ?? "");
+  const backgroundFile = formData.get("backgroundImage") as File | null;
+  const profileFile = formData.get("profileImage") as File | null;
+
+  let backgroundImageUrl: string | undefined;
+  let profileImageUrl: string | undefined;
+
+  if (backgroundFile && backgroundFile.size > 0) {
+    const blob = await put(`background-${Date.now()}`, backgroundFile, { access: "public" });
+    backgroundImageUrl = blob.url;
+  }
+  if (profileFile && profileFile.size > 0) {
+    const blob = await put(`profile-${Date.now()}`, profileFile, { access: "public" });
+    profileImageUrl = blob.url;
+  }
+
+  await updateSettings({ headline, message, backgroundImageUrl, profileImageUrl });
+  revalidatePath("/", "page");
   revalidatePath("/[panelSlug]", "page");
 }

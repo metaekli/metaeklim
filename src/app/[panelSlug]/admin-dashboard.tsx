@@ -1,4 +1,5 @@
 import { logout } from "./actions";
+import ProfileForm from "./profile-form";
 import type { SiteSettings, LinkRecord } from "@/lib/db";
 
 export default function AdminDashboard({
@@ -14,7 +15,12 @@ export default function AdminDashboard({
         <button type="submit">Log out</button>
       </form>
       <h1>EKLIM Admin</h1>
-      <p>Headline: {settings.headline}</p>
+      <ProfileForm
+        initialHeadline={settings.headline}
+        initialMessage={settings.message}
+        initialBackgroundUrl={settings.backgroundImageUrl}
+        initialProfileUrl={settings.profileImageUrl}
+      />
       <p>{links.length} link(s) configured.</p>
     </main>
   );
