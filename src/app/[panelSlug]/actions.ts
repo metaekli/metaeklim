@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { put } from "@vercel/blob";
 import { verifyPassword, createSessionToken, verifySessionToken } from "@/lib/auth";
-import { updateSettings } from "@/lib/db";
+import { updateSettings, addLink, removeLink, reorderLinks } from "@/lib/db";
+import { detectPlatform } from "@/lib/platform-detect";
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "./session";
 
 export async function requireSession(): Promise<void> {
@@ -69,6 +70,33 @@ export async function saveProfile(formData: FormData): Promise<void> {
   }
 
   await updateSettings({ headline, message, backgroundImageUrl, profileImageUrl });
+  revalidatePath("/", "page");
+  revalidatePath("/[panelSlug]", "page");
+}
+
+export async function addLinkAction(formData: FormData): Promise<void> {
+  await requireSession();
+
+  const url = String(formData.get("url") ?? "").trim();
+  if (!url) return;
+
+  const { platform, label } = detectPlatform(url);
+  await addLink(url, platform, label);
+
+  revalidatePath("/", "page");
+  revalidatePath("/[panelSlug]", "page");
+}
+
+export async function removeLinkAction(id: number): Promise<void> {
+  await requireSession();
+  await removeLink(id);
+  revalidatePath("/", "page");
+  revalidatePath("/[panelSlug]", "page");
+}
+
+export async function reorderLinksAction(orderedIds: number[]): Promise<void> {
+  await requireSession();
+  await reorderLinks(orderedIds);
   revalidatePath("/", "page");
   revalidatePath("/[panelSlug]", "page");
 }
