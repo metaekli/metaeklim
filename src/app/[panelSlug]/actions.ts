@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { put } from "@vercel/blob";
 import { verifyPassword, createSessionToken, verifySessionToken } from "@/lib/auth";
-import { updateSettings, addLink, removeLink, reorderLinks } from "@/lib/db";
+import { updateSettings, addLink, removeLink, reorderLinks, setMainLink } from "@/lib/db";
 import { detectPlatform } from "@/lib/platform-detect";
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "./session";
 
@@ -97,6 +97,13 @@ export async function removeLinkAction(id: number): Promise<void> {
 export async function reorderLinksAction(orderedIds: number[]): Promise<void> {
   await requireSession();
   await reorderLinks(orderedIds);
+  revalidatePath("/", "page");
+  revalidatePath("/[panelSlug]", "page");
+}
+
+export async function setMainLinkAction(id: number): Promise<void> {
+  await requireSession();
+  await setMainLink(id);
   revalidatePath("/", "page");
   revalidatePath("/[panelSlug]", "page");
 }

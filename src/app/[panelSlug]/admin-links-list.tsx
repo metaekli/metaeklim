@@ -16,24 +16,42 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { FiMenu } from "react-icons/fi";
+import { FiMenu, FiStar } from "react-icons/fi";
 import PlatformIcon from "@/components/PlatformIcon";
 import type { Platform } from "@/lib/platform-detect";
-import { removeLinkAction, reorderLinksAction } from "./actions";
+import { removeLinkAction, reorderLinksAction, setMainLinkAction } from "./actions";
 
 export interface AdminLinkRecord {
   id: number;
   url: string;
   platform: Platform;
   label: string;
+  isMain: boolean;
+}
+
+function MainToggle({ isMain, onClick }: { isMain: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className={isMain ? "admin-link-main admin-link-main--active" : "admin-link-main"}
+      onClick={onClick}
+      aria-pressed={isMain}
+      title={isMain ? "This is the main link" : "Set as main link"}
+    >
+      <FiStar />
+      {isMain ? "Main" : "Set as main"}
+    </button>
+  );
 }
 
 function SortableRow({
   link,
   onRemove,
+  onSetMain,
 }: {
   link: AdminLinkRecord;
   onRemove: (id: number) => void;
+  onSetMain: (id: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: link.id,
@@ -54,6 +72,7 @@ function SortableRow({
       <PlatformIcon platform={link.platform} className="admin-link-icon" />
       <span className="admin-link-label">{link.label}</span>
       <span className="admin-link-url">{link.url}</span>
+      <MainToggle isMain={link.isMain} onClick={() => onSetMain(link.id)} />
       <button type="button" onClick={() => onRemove(link.id)}>
         Remove
       </button>
@@ -70,6 +89,10 @@ function StaticRow({ link }: { link: AdminLinkRecord }) {
       <PlatformIcon platform={link.platform} className="admin-link-icon" />
       <span className="admin-link-label">{link.label}</span>
       <span className="admin-link-url">{link.url}</span>
+      <span className={link.isMain ? "admin-link-main admin-link-main--active" : "admin-link-main"}>
+        <FiStar />
+        {link.isMain ? "Main" : "Set as main"}
+      </span>
       <button type="button" disabled>
         Remove
       </button>
@@ -111,6 +134,13 @@ export default function AdminLinksList({ initialLinks }: { initialLinks: AdminLi
     });
   }
 
+  function handleSetMain(id: number) {
+    setLinks((prev) => prev.map((l) => ({ ...l, isMain: l.id === id })));
+    startTransition(() => {
+      setMainLinkAction(id);
+    });
+  }
+
   if (!mounted) {
     return (
       <ul className="admin-link-list">
@@ -126,7 +156,12 @@ export default function AdminLinksList({ initialLinks }: { initialLinks: AdminLi
       <SortableContext items={links.map((l) => l.id)} strategy={verticalListSortingStrategy}>
         <ul className="admin-link-list">
           {links.map((link) => (
-            <SortableRow key={link.id} link={link} onRemove={handleRemove} />
+            <SortableRow
+              key={link.id}
+              link={link}
+              onRemove={handleRemove}
+              onSetMain={handleSetMain}
+            />
           ))}
         </ul>
       </SortableContext>

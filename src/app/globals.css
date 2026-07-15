@@ -532,3 +532,16 @@ textarea:focus-visible {
   color: var(--accent);
   cursor: pointer;
 }
+
+.admin-link-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.admin-link-row .admin-link-main--active {
+  background: var(--accent);
+  color: var(--bg-top);
+  border-color: var(--accent);
+}

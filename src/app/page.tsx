@@ -47,13 +47,13 @@ export default async function HomePage() {
           {settings.message && <p className="message">{settings.message}</p>}
 
           <div className="link-list">
-            {links.map((link, index) => (
+            {links.map((link) => (
               <LinkBox
                 key={link.id}
                 url={link.url}
                 platform={link.platform as Platform}
                 label={link.label}
-                primary={index === 0}
+                primary={link.isMain}
               />
             ))}
           </div>
