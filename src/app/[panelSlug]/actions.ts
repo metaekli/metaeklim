@@ -4,7 +4,14 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { put } from "@vercel/blob";
 import { verifyPassword, createSessionToken, verifySessionToken } from "@/lib/auth";
-import { updateSettings, addLink, removeLink, reorderLinks, setMainLink } from "@/lib/db";
+import {
+  updateSettings,
+  addLink,
+  removeLink,
+  reorderLinks,
+  setMainLink,
+  updateLinkLabel,
+} from "@/lib/db";
 import { detectPlatform } from "@/lib/platform-detect";
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "./session";
 
@@ -49,7 +56,10 @@ export async function logout(): Promise<void> {
   revalidatePath("/[panelSlug]", "page");
 }
 
-export async function saveProfile(formData: FormData): Promise<void> {
+export async function saveProfile(
+  _prevState: { error: string } | undefined,
+  formData: FormData
+): Promise<{ error: string }> {
   await requireSession();
 
   const headline = String(formData.get("headline") ?? "");
@@ -59,19 +69,36 @@ export async function saveProfile(formData: FormData): Promise<void> {
 
   let backgroundImageUrl: string | undefined;
   let profileImageUrl: string | undefined;
+  let uploadFailed = false;
 
   if (backgroundFile && backgroundFile.size > 0) {
-    const blob = await put(`background-${Date.now()}`, backgroundFile, { access: "public" });
-    backgroundImageUrl = blob.url;
+    try {
+      const blob = await put(`background-${Date.now()}`, backgroundFile, { access: "public" });
+      backgroundImageUrl = blob.url;
+    } catch {
+      uploadFailed = true;
+    }
   }
   if (profileFile && profileFile.size > 0) {
-    const blob = await put(`profile-${Date.now()}`, profileFile, { access: "public" });
-    profileImageUrl = blob.url;
+    try {
+      const blob = await put(`profile-${Date.now()}`, profileFile, { access: "public" });
+      profileImageUrl = blob.url;
+    } catch {
+      uploadFailed = true;
+    }
   }
 
   await updateSettings({ headline, message, backgroundImageUrl, profileImageUrl });
   revalidatePath("/", "page");
   revalidatePath("/[panelSlug]", "page");
+
+  if (uploadFailed) {
+    return {
+      error:
+        "Headline and message were saved, but the image upload failed. Check that image storage is configured (BLOB_READ_WRITE_TOKEN) and try again.",
+    };
+  }
+  return { error: "" };
 }
 
 export async function addLinkAction(formData: FormData): Promise<void> {
@@ -104,6 +131,15 @@ export async function reorderLinksAction(orderedIds: number[]): Promise<void> {
 export async function setMainLinkAction(id: number): Promise<void> {
   await requireSession();
   await setMainLink(id);
+  revalidatePath("/", "page");
+  revalidatePath("/[panelSlug]", "page");
+}
+
+export async function updateLinkLabelAction(id: number, label: string): Promise<void> {
+  await requireSession();
+  const trimmed = label.trim();
+  if (!trimmed) return;
+  await updateLinkLabel(id, trimmed);
   revalidatePath("/", "page");
   revalidatePath("/[panelSlug]", "page");
 }

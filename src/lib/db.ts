@@ -117,3 +117,7 @@ export async function reorderLinks(orderedIds: number[]): Promise<void> {
 export async function setMainLink(id: number): Promise<void> {
   await withRetry(() => sql`UPDATE links SET is_main = (id = ${id})`);
 }
+
+export async function updateLinkLabel(id: number, label: string): Promise<void> {
+  await withRetry(() => sql`UPDATE links SET label = ${label} WHERE id = ${id}`);
+}
