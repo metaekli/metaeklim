@@ -61,10 +61,31 @@ function SortableRow({
   );
 }
 
+function StaticRow({ link }: { link: AdminLinkRecord }) {
+  return (
+    <li className="admin-link-row">
+      <span className="admin-link-handle" aria-hidden="true">
+        <FiMenu />
+      </span>
+      <PlatformIcon platform={link.platform} className="admin-link-icon" />
+      <span className="admin-link-label">{link.label}</span>
+      <span className="admin-link-url">{link.url}</span>
+      <button type="button" disabled>
+        Remove
+      </button>
+    </li>
+  );
+}
+
 export default function AdminLinksList({ initialLinks }: { initialLinks: AdminLinkRecord[] }) {
   const [links, setLinks] = useState(initialLinks);
   const [, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor));
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setLinks(initialLinks);
@@ -88,6 +109,16 @@ export default function AdminLinksList({ initialLinks }: { initialLinks: AdminLi
     startTransition(() => {
       removeLinkAction(id);
     });
+  }
+
+  if (!mounted) {
+    return (
+      <ul className="admin-link-list">
+        {links.map((link) => (
+          <StaticRow key={link.id} link={link} />
+        ))}
+      </ul>
+    );
   }
 
   return (
