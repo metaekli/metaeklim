@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
@@ -16,6 +16,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { FiMenu } from "react-icons/fi";
 import PlatformIcon from "@/components/PlatformIcon";
 import type { Platform } from "@/lib/platform-detect";
 import { removeLinkAction, reorderLinksAction } from "./actions";
@@ -40,7 +41,16 @@ function SortableRow({
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <li ref={setNodeRef} style={style} className="admin-link-row" {...attributes} {...listeners}>
+    <li ref={setNodeRef} style={style} className="admin-link-row">
+      <button
+        type="button"
+        className="admin-link-handle"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <FiMenu />
+      </button>
       <PlatformIcon platform={link.platform} className="admin-link-icon" />
       <span className="admin-link-label">{link.label}</span>
       <span className="admin-link-url">{link.url}</span>
@@ -55,6 +65,10 @@ export default function AdminLinksList({ initialLinks }: { initialLinks: AdminLi
   const [links, setLinks] = useState(initialLinks);
   const [, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor));
+
+  useEffect(() => {
+    setLinks(initialLinks);
+  }, [initialLinks]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;

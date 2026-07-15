@@ -8,11 +8,13 @@ export default function LoginForm() {
 
   return (
     <main className="login-page">
-      <form action={formAction}>
-        <input type="password" name="password" placeholder="Password" required autoFocus />
-        <button type="submit">Enter</button>
-      </form>
-      {state?.error && <p className="login-error">{state.error}</p>}
+      <div>
+        <form action={formAction} className="login-form">
+          <input type="password" name="password" placeholder="Password" required autoFocus />
+          <button type="submit">Enter</button>
+        </form>
+        {state?.error && <p className="login-error">{state.error}</p>}
+      </div>
     </main>
   );
 }
