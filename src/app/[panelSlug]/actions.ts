@@ -75,7 +75,8 @@ export async function saveProfile(
     try {
       const blob = await put(`background-${Date.now()}`, backgroundFile, { access: "public" });
       backgroundImageUrl = blob.url;
-    } catch {
+    } catch (error) {
+      console.error("Background image upload failed:", error);
       uploadFailed = true;
     }
   }
@@ -83,7 +84,8 @@ export async function saveProfile(
     try {
       const blob = await put(`profile-${Date.now()}`, profileFile, { access: "public" });
       profileImageUrl = blob.url;
-    } catch {
+    } catch (error) {
+      console.error("Profile image upload failed:", error);
       uploadFailed = true;
     }
   }
